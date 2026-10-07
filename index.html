@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trivia: Ley Olimpia y Violencia Digital</title>
+    <style>
+        :root {
+            --primary: #6c5ce7;
+            --primary-hover: #5a4bcf;
+            --bg: #f8f9fa;
+            --card-bg: #ffffff;
+            --text: #2d3436;
+            --correct: #00b894;
+            --incorrect: #d63031;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .quiz-container {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 600px;
+            padding: 30px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            color: var(--primary);
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background-color: #eee;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .progress {
+            height: 100%;
+            background-color: var(--primary);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .question {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn-option {
+            background-color: #f1f2f6;
+            border: 2px solid transparent;
+            padding: 14px 20px;
+            border-radius: 10px;
+            font-size: 1rem;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s ease;
+        }
+
+        .btn-option:hover:not([disabled]) {
+            background-color: #e4e6eb;
+        }
+
+        .btn-option.correct {
+            background-color: #e6fffa;
+            border-color: var(--correct);
+            color: var(--correct);
+            font-weight: bold;
+        }
+
+        .btn-option.incorrect {
+            background-color: #ffe3e3;
+            border-color: var(--incorrect);
+            color: var(--incorrect);
+            font-weight: bold;
+        }
+
+        .explanation {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #f0f3ff;
+            font-size: 0.95rem;
+            display: none;
+        }
+
+        .btn-next {
+            margin-top: 20px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            width: 100%;
+            display: none;
+            font-weight: bold;
+        }
+
+        .btn-next:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .results {
+            text-align: center;
+            display: none;
+        }
+
+        .results h2 {
+            font-size: 2rem;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .results p {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <div id="quiz-screen">
+        <div class="header">
+            <h1>Reto: Ley Olimpia</h1>
+            <p id="question-count">Pregunta 1 de 5</p>
+        </div>
+        <div class="progress-bar">
+            <div class="progress" id="progress"></div>
+        </div>
+        <div class="question" id="question-text">Cargando pregunta...</div>
+        <div class="options" id="options-container"></div>
+        <div class="explanation" id="explanation-box"></div>
+        <button class="btn-next" id="btn-next" onclick="nextQuestion()">Siguiente Pregunta</button>
+    </div>
+
+    <div class="results" id="results-screen">
+        <h2>¡Cuestionario Finalizado!</h2>
+        <p id="score-text"></p>
+        <button class="btn-next" style="display:block;" onclick="restartQuiz()">Volver a Jugar</button>
+    </div>
+</div>
+
+<script>
+    const questions = [
+        {
+            question: "¿La Ley Olimpia protege únicamente a las mujeres?",
+            options: [
+                { text: "Sí, es una ley exclusiva para mujeres.", correct: false },
+                { text: "No, el Código Penal protege a cualquier persona sin importar su género.", correct: true }
+            ],
+            explanation: "Aunque nació del movimiento feminista, la reforma al Código Penal sanciona a 'quien' cometa la conducta contra 'otra persona', protegiendo también a hombres."
+        },
+        {
+            question: "Si recibes una foto íntima en un grupo de WhatsApp, ¿cometes un delito si la reenvías?",
+            options: [
+                { text: "Sí, la ley sanciona tanto a quien la toma como a quien la difunde o reenvía.", correct: true },
+                { text: "No, el delito solo lo comete quien subió la foto originalmente.", correct: false },
+                { text: "No, siempre y cuando no digas el nombre de la persona.", correct: false }
+            ],
+            explanation: "Difundir, compartir o comercializar contenido íntimo sin permiso expreso constituye el delito de violación a la intimidad sexual."
+        },
+        {
+            question: "¿Crear un desnudo FALSO usando Inteligencia Artificial sanciona con la Ley Olimpia?",
+            options: [
+                { text: "No, porque la foto o video no es real.", correct: false },
+                { text: "Sí, alterar o crear contenido íntimo simulado con IA o software sin consentimiento está castigado.", correct: true }
+            ],
+            explanation: "Las actualizaciones recientes a la ley sancionan el uso de herramientas tecnológicas e IA para generar desnudos simulados sin autorización."
+        },
+        {
+            question: "¿Cuál es la sanción de cárcel prevista para este delito a nivel federal?",
+            options: [
+                { text: "Solo una multa económica sin cárcel.", correct: false },
+                { text: "De 6 meses a 1 año de prisión.", correct: false },
+                { text: "De 3 a 6 años de prisión.", correct: true }
+            ],
+            explanation: "El Código Penal Federal establece una pena de 3 a 6 años de prisión, más multas de 500 a 1,000 UMAs."
+        },
+        {
+            question: "Si enviaste voluntariamente contenido íntimo a tu pareja cuando andaban y luego te amenaza con publicarlo, ¿es delito?",
+            options: [
+                { text: "Sí, es sextorsión y el hecho de ser o haber sido pareja es una agravante que aumenta la pena.", correct: true },
+                { text: "No, porque le diste el contenido por tu propia voluntad.", correct: false }
+            ],
+            explanation: "El consentimiento de enviar una foto privada no es autorización para guardarla indefinidamente ni para chantajear. Además, la relación previa agrava la sanción."
+        }
+    ];
+
+    let currentQuestionIndex = 0;
+    let score = 0;
+
+    const questionText = document.getElementById('question-text');
+    const optionsContainer = document.getElementById('options-container');
+    const explanationBox = document.getElementById('explanation-box');
+    const btnNext = document.getElementById('btn-next');
+    const questionCount = document.getElementById('question-count');
+    const progress = document.getElementById('progress');
+    const quizScreen = document.getElementById('quiz-screen');
+    const resultsScreen = document.getElementById('results-screen');
+    const scoreText = document.getElementById('score-text');
+
+    function startQuiz() {
+        currentQuestionIndex = 0;
+        score = 0;
+        quizScreen.style.display = 'block';
+        resultsScreen.style.display = 'none';
+        showQuestion();
+    }
+
+    function showQuestion() {
+        resetState();
+        const currentQuestion = questions[currentQuestionIndex];
+        questionText.textContent = currentQuestion.question;
+        questionCount.textContent = `Pregunta ${currentQuestionIndex + 1} de ${questions.length}`;
+        progress.style.width = `${((currentQuestionIndex + 1) / questions.length) * 100}%`;
+
+        currentQuestion.options.forEach(option => {
+            const button = document.createElement('button');
+            button.textContent = option.text;
+            button.classList.add('btn-option');
+            button.addEventListener('click', () => selectOption(button, option.correct, currentQuestion.explanation));
+            optionsContainer.appendChild(button);
+        });
+    }
+
+    function resetState() {
+        btnNext.style.display = 'none';
+        explanationBox.style.display = 'none';
+        explanationBox.textContent = '';
+        while (optionsContainer.firstChild) {
+            optionsContainer.removeChild(optionsContainer.firstChild);
+        }
+    }
+
+    function selectOption(selectedButton, isCorrect, explanation) {
+        const buttons = optionsContainer.querySelectorAll('.btn-option');
+        buttons.forEach(button => {
+            button.disabled = true;
+        });
+
+        if (isCorrect) {
+            selectedButton.classList.add('correct');
+            score++;
+        } else {
+            selectedButton.classList.add('incorrect');
+            // Mostrar la correcta
+            questions[currentQuestionIndex].options.forEach((opt, index) => {
+                if (opt.correct) {
+                    buttons[index].classList.add('correct');
+                }
+            });
+        }
+
+        explanationBox.textContent = explanation;
+        explanationBox.style.display = 'block';
+        btnNext.style.display = 'block';
+    }
+
+    function nextQuestion() {
+        currentQuestionIndex++;
+        if (currentQuestionIndex < questions.length) {
+            showQuestion();
+        } else {
+            showResults();
+        }
+    }
+
+    function showResults() {
+        quizScreen.style.display = 'none';
+        resultsScreen.style.display = 'block';
+        scoreText.textContent = `Obtuviste ${score} de ${questions.length} respuestas correctas.`;
+    }
+
+    function restartQuiz() {
+        startQuiz();
+    }
+
+    startQuiz();
+</script>
+
+</body>
+</html>
